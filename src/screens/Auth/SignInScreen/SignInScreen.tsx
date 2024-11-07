@@ -12,9 +12,10 @@ import CustomButton from '../components/CustomButton';
 import SocialSignInButtons from '../components/SocialSignInButtons';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
-import {signIn, signOut} from 'aws-amplify/auth';
+import {signIn, signOut, getCurrentUser} from 'aws-amplify/auth';
 import {SignInNavigationProp} from '../../../types/navigation';
 import {useState} from 'react';
+import {useAuthContext} from '../../../contexts/AuthContext';
 
 type SignInData = {
   username: string;
@@ -25,6 +26,7 @@ const SignInScreen = () => {
   const {height} = useWindowDimensions();
   const navigation = useNavigation<SignInNavigationProp>();
   const [loading, setLoading] = useState(false);
+  const {setUser} = useAuthContext();
 
   const {control, handleSubmit, reset} = useForm<SignInData>();
 
@@ -34,11 +36,16 @@ const SignInScreen = () => {
     }
     setLoading(true);
     try {
-      const {nextStep} = await signIn({
+      //signOut();
+      const response = await signIn({
         username,
         password,
       });
-      if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      console.log('Sign in response', response);
+      console.log('Current user', currentUser);
+      if (response.nextStep.signInStep === 'CONFIRM_SIGN_UP') {
         navigation.navigate('Confirm email', {username});
       }
     } catch (error) {
