@@ -9,7 +9,7 @@ import {
   MyProfileRouteProp,
   UserProfileRouteProp,
   MyProfileNavigationProp,
-} from '../../navigation/types';
+} from '../../types/navigation';
 
 const ProfileScreen = () => {
   const route = useRoute<UserProfileRouteProp | MyProfileRouteProp>();
@@ -19,7 +19,6 @@ const ProfileScreen = () => {
 
   const userId = route.params?.userId;
   // query the user with userID
-
   //navigation.setOptions({title: user.username});
   return <FeedGridView data={user.posts} ListHeaderComponent={ProfileHeader} />;
 };

@@ -4,9 +4,12 @@ import styles from './Styles';
 import Button from '../../components/Button';
 import user from '../../assets/data/user.json';
 import {useNavigation} from '@react-navigation/native';
-import {ProfileNavigationProp} from '../../navigation/types';
+import {ProfileNavigationProp} from '../../types/navigation';
+import {useAuthenticator} from '@aws-amplify/ui-react-native';
 
 const ProfileHeader = () => {
+  const {signOut} = useAuthenticator();
+
   const navigation = useNavigation<ProfileNavigationProp>();
   return (
     <View style={styles.root}>
@@ -42,10 +45,7 @@ const ProfileHeader = () => {
           onPress={() => navigation.navigate('Edit Profile')}
         />
 
-        <Button
-          text={'Another button'}
-          onPress={() => console.warn('On another button')}
-        />
+        <Button text={'Sign out'} onPress={signOut} />
       </View>
 
       {/* GriddView Posts */}
