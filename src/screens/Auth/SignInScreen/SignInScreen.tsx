@@ -4,6 +4,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   ScrollView,
+  Alert,
 } from 'react-native';
 import Logo from '../../../assets/images/logo.png';
 import FormInput from '../components/FormInput';
@@ -11,7 +12,9 @@ import CustomButton from '../components/CustomButton';
 import SocialSignInButtons from '../components/SocialSignInButtons';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import {signIn, signOut} from 'aws-amplify/auth';
 import {SignInNavigationProp} from '../../../types/navigation';
+import {useState} from 'react';
 
 type SignInData = {
   username: string;
@@ -21,11 +24,30 @@ type SignInData = {
 const SignInScreen = () => {
   const {height} = useWindowDimensions();
   const navigation = useNavigation<SignInNavigationProp>();
+  const [loading, setLoading] = useState(false);
 
-  const {control, handleSubmit} = useForm<SignInData>();
+  const {control, handleSubmit, reset} = useForm<SignInData>();
 
-  const onSignInPressed = (data: SignInData) => {
-    console.log(data);
+  const onSignInPressed = async ({username, password}: SignInData) => {
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const {nextStep} = await signIn({
+        username,
+        password,
+      });
+      if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
+        navigation.navigate('Confirm email', {username});
+      }
+    } catch (error) {
+      Alert.alert('Oops', (error as Error).message);
+    } finally {
+      setLoading(false);
+      reset();
+    }
+
     // validate user
     // navigation.navigate('Home');
   };
@@ -68,7 +90,10 @@ const SignInScreen = () => {
           }}
         />
 
-        <CustomButton text="Sign In" onPress={handleSubmit(onSignInPressed)} />
+        <CustomButton
+          text={loading ? 'Loading' : 'Sign In'}
+          onPress={handleSubmit(onSignInPressed)}
+        />
 
         <CustomButton
           text="Forgot password?"

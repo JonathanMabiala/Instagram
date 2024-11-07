@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
 import FormInput from '../components/FormInput';
 import CustomButton from '../components/CustomButton';
 import SocialSignInButtons from '../components/SocialSignInButtons';
@@ -6,6 +6,8 @@ import {useNavigation} from '@react-navigation/core';
 import {useForm} from 'react-hook-form';
 import {SignUpNavigationProp} from '../../../types/navigation';
 import colors from '../../../theme/colors';
+import {signUp} from 'aws-amplify/auth';
+import {useState} from 'react';
 
 const EMAIL_REGEX =
   /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
@@ -24,9 +26,38 @@ const SignUpScreen = () => {
   const {control, handleSubmit, watch} = useForm<SignUpData>();
   const pwd = watch('password');
   const navigation = useNavigation<SignUpNavigationProp>();
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const onRegisterPressed = ({name, email, username, password}: SignUpData) => {
-    navigation.navigate('Confirm email', {username});
+  const onRegisterPressed = async ({
+    name,
+    email,
+    username,
+    password,
+  }: SignUpData) => {
+    setLoading(true);
+    try {
+      const {isSignUpComplete, userId, nextStep} = await signUp({
+        username,
+        password,
+        options: {
+          userAttributes: {
+            name,
+            email,
+          },
+        },
+      });
+
+      console.log('isSignUpComplete', isSignUpComplete);
+      console.log('userId', userId);
+      console.log('nextStep', nextStep);
+
+      // Navigate to confirm email
+      navigation.navigate('Confirm email', {username});
+    } catch (error) {
+      Alert.alert('Oops', (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSignInPress = () => {
@@ -117,7 +148,7 @@ const SignUpScreen = () => {
         />
 
         <CustomButton
-          text="Register"
+          text={loading ? 'Loading' : 'Register'}
           onPress={handleSubmit(onRegisterPressed)}
         />
 

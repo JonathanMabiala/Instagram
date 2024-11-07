@@ -6,6 +6,8 @@ import SocialSignInButtons from '../components/SocialSignInButtons';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
 import {NewPasswordNavigationProp} from '../../../types/navigation';
+import {Alert} from 'react-native';
+import {confirmResetPassword} from 'aws-amplify/auth';
 
 type NewPasswordType = {
   username: string;
@@ -18,9 +20,32 @@ const NewPasswordScreen = () => {
 
   const navigation = useNavigation<NewPasswordNavigationProp>();
 
-  const onSubmitPressed = (data: NewPasswordType) => {
-    console.warn(data);
-    navigation.navigate('Sign in');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const onSubmitPressed = async ({
+    username,
+    code,
+    password,
+  }: NewPasswordType) => {
+    if (loading) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await confirmResetPassword({
+        username,
+        confirmationCode: code,
+        newPassword: password,
+      });
+
+      navigation.navigate('Sign in');
+    } catch (error) {
+      Alert.alert('Oops', (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSignInPress = () => {
@@ -60,7 +85,10 @@ const NewPasswordScreen = () => {
           }}
         />
 
-        <CustomButton text="Submit" onPress={handleSubmit(onSubmitPressed)} />
+        <CustomButton
+          text={loading ? 'Resetting...' : 'Submit'}
+          onPress={handleSubmit(onSubmitPressed)}
+        />
 
         <CustomButton
           text="Back to Sign in"

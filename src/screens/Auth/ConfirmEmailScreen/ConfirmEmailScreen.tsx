@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
 import FormInput from '../components/FormInput';
 import CustomButton from '../components/CustomButton';
 import SocialSignInButtons from '../components/SocialSignInButtons';
@@ -10,6 +10,7 @@ import {
   ConfirmEmailRouteProp,
 } from '../../../types/navigation';
 import {useRoute} from '@react-navigation/native';
+import {confirmSignUp, resendSignUpCode} from 'aws-amplify/auth';
 
 type ConfirmEmailData = {
   username: string;
@@ -18,23 +19,46 @@ type ConfirmEmailData = {
 
 const ConfirmEmailScreen = () => {
   const route = useRoute<ConfirmEmailRouteProp>();
-  const {control, handleSubmit} = useForm<ConfirmEmailData>({
+  const {control, handleSubmit, watch} = useForm<ConfirmEmailData>({
     defaultValues: {username: route.params.username},
   });
+  const [loading, setLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<ConfirmEmailNavigationProp>();
 
-  const onConfirmPressed = (data: ConfirmEmailData) => {
-    console.warn(data);
-    navigation.navigate('Sign in');
+  const usr = watch('username');
+
+  const onConfirmPressed = async ({username, code}: ConfirmEmailData) => {
+    setLoading(true);
+    try {
+      const {isSignUpComplete, nextStep} = await confirmSignUp({
+        username,
+        confirmationCode: code,
+      });
+      navigation.navigate('Sign in');
+    } catch (error) {
+      Alert.alert('Oops', (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSignInPress = () => {
     navigation.navigate('Sign in');
   };
 
-  const onResendPress = () => {
-    console.warn('onResendPress');
+  const onResendPress = async () => {
+    setLoading(true);
+    try {
+      const {destination, deliveryMedium} = await resendSignUpCode({
+        username: usr,
+      });
+      Alert.alert('Check your email', 'The code has been sent');
+    } catch (error) {
+      Alert.alert('Oops', (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,10 +84,13 @@ const ConfirmEmailScreen = () => {
           }}
         />
 
-        <CustomButton text="Confirm" onPress={handleSubmit(onConfirmPressed)} />
+        <CustomButton
+          text={loading ? 'Loading' : 'Confirm'}
+          onPress={handleSubmit(onConfirmPressed)}
+        />
 
         <CustomButton
-          text="Resend code"
+          text={loading ? 'Sending' : 'Resend code'}
           onPress={onResendPress}
           type="SECONDARY"
         />
