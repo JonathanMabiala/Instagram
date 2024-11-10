@@ -8,8 +8,11 @@ import {useForm} from 'react-hook-form';
 import {ForgotPasswordNavigationProp} from '../../../types/navigation';
 import {resetPassword} from 'aws-amplify/auth';
 
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
 type ForgotPasswordData = {
-  username: string;
+  email: string;
 };
 
 const ForgotPasswordScreen = () => {
@@ -17,7 +20,7 @@ const ForgotPasswordScreen = () => {
   const navigation = useNavigation<ForgotPasswordNavigationProp>();
   const [loading, setLoading] = useState<boolean>(false);
 
-  const onSendPressed = async ({username}: ForgotPasswordData) => {
+  const onSendPressed = async ({email}: ForgotPasswordData) => {
     if (loading) {
       return;
     }
@@ -25,7 +28,7 @@ const ForgotPasswordScreen = () => {
 
     try {
       const response = await resetPassword({
-        username,
+        username: email,
       });
       Alert.alert(
         'Check your email',
@@ -49,11 +52,12 @@ const ForgotPasswordScreen = () => {
         <Text style={styles.title}>Reset your password</Text>
 
         <FormInput
-          name="username"
+          name="email"
           control={control}
-          placeholder="Username"
+          placeholder="Email"
           rules={{
-            required: 'Username is required',
+            required: 'Email is required',
+            pattern: {value: EMAIL_REGEX, message: 'Email is invalid'},
           }}
         />
 

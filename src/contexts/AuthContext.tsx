@@ -16,26 +16,26 @@ type UserType = null | undefined | GetCurrentUserOutput;
 
 type AuthContextType = {
   user: UserType;
-  setUser: Dispatch<SetStateAction<UserType>>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   user: undefined,
-  setUser: () => {},
 });
 
 const AuthContextProvider = ({children}: {children: ReactNode}) => {
   const [user, setUser] = useState<UserType>(undefined);
 
+  const checkUser = async () => {
+    try {
+      const authUser = await getCurrentUser();
+      setUser(authUser);
+      console.log('Current user', authUser);
+    } catch (error) {
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const authUser = await getCurrentUser();
-        setUser(authUser);
-      } catch (error) {
-        setUser(null);
-      }
-    };
     checkUser();
   }, []);
 
@@ -45,17 +45,18 @@ const AuthContextProvider = ({children}: {children: ReactNode}) => {
       if (event === 'signedOut') {
         setUser(null);
       }
+
+      if (event === 'signedIn') {
+        checkUser();
+      }
+      console.log('Listener: ', listener);
     };
     const hubListenerCancel = Hub.listen('auth', listener);
 
     //Stop listening
     return () => hubListenerCancel();
   }, []);
-  return (
-    <AuthContext.Provider value={{user, setUser}}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{user}}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContextProvider;

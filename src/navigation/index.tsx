@@ -10,11 +10,11 @@ import {ActivityIndicator, View} from 'react-native';
 
 const Stack = createNativeStackNavigator<RootNavigatorParamList>();
 const linking: LinkingOptions<RootNavigatorParamList> = {
-  prefixes: ['notjustphotos://', 'https://notjustphotos.com'],
+  prefixes: ['dopecodephotos://', 'https://dopecodephotos.com'],
   config: {
     initialRouteName: 'Home',
     screens: {
-      Comments: 'comments', // notjustphotos://comments
+      Comments: 'comments', // dopecodephotos://comments
       Home: {
         screens: {
           HomeStack: {

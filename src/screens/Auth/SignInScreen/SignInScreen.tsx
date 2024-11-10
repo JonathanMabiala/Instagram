@@ -17,8 +17,11 @@ import {SignInNavigationProp} from '../../../types/navigation';
 import {useState} from 'react';
 import {useAuthContext} from '../../../contexts/AuthContext';
 
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
 type SignInData = {
-  username: string;
+  email: string;
   password: string;
 };
 
@@ -26,27 +29,21 @@ const SignInScreen = () => {
   const {height} = useWindowDimensions();
   const navigation = useNavigation<SignInNavigationProp>();
   const [loading, setLoading] = useState(false);
-  const {setUser} = useAuthContext();
-
   const {control, handleSubmit, reset} = useForm<SignInData>();
 
-  const onSignInPressed = async ({username, password}: SignInData) => {
+  const onSignInPressed = async ({email, password}: SignInData) => {
     if (loading) {
       return;
     }
     setLoading(true);
     try {
-      //signOut();
       const response = await signIn({
-        username,
+        username: email,
         password,
       });
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      console.log('Sign in response', response);
-      console.log('Current user', currentUser);
+
       if (response.nextStep.signInStep === 'CONFIRM_SIGN_UP') {
-        navigation.navigate('Confirm email', {username});
+        navigation.navigate('Confirm email', {email});
       }
     } catch (error) {
       Alert.alert('Oops', (error as Error).message);
@@ -77,10 +74,13 @@ const SignInScreen = () => {
         />
 
         <FormInput
-          name="username"
-          placeholder="Username"
+          name="email"
+          placeholder="Email"
           control={control}
-          rules={{required: 'Username is required'}}
+          rules={{
+            required: 'Email is required',
+            pattern: {value: EMAIL_REGEX, message: 'Email is invalid'},
+          }}
         />
 
         <FormInput

@@ -9,8 +9,11 @@ import {NewPasswordNavigationProp} from '../../../types/navigation';
 import {Alert} from 'react-native';
 import {confirmResetPassword} from 'aws-amplify/auth';
 
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
 type NewPasswordType = {
-  username: string;
+  email: string;
   code: string;
   password: string;
 };
@@ -22,11 +25,7 @@ const NewPasswordScreen = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
 
-  const onSubmitPressed = async ({
-    username,
-    code,
-    password,
-  }: NewPasswordType) => {
+  const onSubmitPressed = async ({email, code, password}: NewPasswordType) => {
     if (loading) {
       return;
     }
@@ -35,7 +34,7 @@ const NewPasswordScreen = () => {
 
     try {
       const response = await confirmResetPassword({
-        username,
+        username: email,
         confirmationCode: code,
         newPassword: password,
       });
@@ -58,10 +57,13 @@ const NewPasswordScreen = () => {
         <Text style={styles.title}>Reset your password</Text>
 
         <FormInput
-          placeholder="Username"
-          name="username"
+          placeholder="Email"
+          name="email"
           control={control}
-          rules={{required: 'Username is required'}}
+          rules={{
+            required: 'Email is required',
+            pattern: {value: EMAIL_REGEX, message: 'Email is invalid'},
+          }}
         />
 
         <FormInput
